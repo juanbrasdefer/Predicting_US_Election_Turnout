@@ -38,18 +38,21 @@ appearances_distribution <- counts_years %>%
   group_by(year_counts) %>%
   summarise(n_counties = n_distinct(county_fips))
 
+# counties to get rid of
 counties_troublesome <- year_fips_combinations %>%
   filter(years_present < 6)
 
 
-
-# USING COUNTY NAME ---------------------------------------------------------
-
-county_pres %>%
-  summarise(unique_count = n_distinct(county_name))
-
 county_pres %>%
   summarise(unique_count = n_distinct(county_fips))
+
+
+
+
+
+
+
+# USING COUNTY NAME --------------------------------------------------------
 
 
 # number of counties in each year 

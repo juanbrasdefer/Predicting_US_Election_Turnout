@@ -1,0 +1,240 @@
+---
+title: "Stage_2_Explorations"
+author: "Juan Pablo"
+date: "2024-09-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Stage 2
+
+I worked in R for the data explorations just because of the ease of seeing tables and variables in the environment. I hope that's ok! I usually work in R Scripts but exporting to html is easier through Rmd, so here we are :)
+
+```{r}
+#libraries
+library(tidyverse)
+library(here)
+library(httr)
+library(jsonlite)
+
+```
+
+
+## Explorations - Voting Data
+
+```{r}
+
+# set directory
+here::i_am("code/exploration_votingdata.R")
+
+county_pres <- read_csv(here("data/countypres_2000-2020.csv"))
+
+# USING FIPS ----------------------------------------------------------------
+
+
+# number of counties in each year 
+counties_in_year <- county_pres %>%
+  group_by(year) %>%
+  summarise(num_counties = n_distinct(county_fips))
+# this seems too good to be true; need to investigate
+
+
+# looking at unique years in each county
+year_fips_combinations <- county_pres %>%
+  distinct(year, county_fips) %>%
+  group_by(county_fips) %>%
+  mutate(years_present = n_distinct(year))
+# not so helpful; still a super manual task
+
+
+
+#go one layer down and count how many distinct years each county has
+counts_years <- county_pres %>% 
+  group_by(county_fips) %>%
+  summarise(year_counts = n_distinct(year))
+# this looks pretty good
+
+appearances_distribution <- counts_years %>%
+  group_by(year_counts) %>%
+  summarise(n_counties = n_distinct(county_fips))
+
+# counties to get rid of
+counties_troublesome <- year_fips_combinations %>%
+  filter(years_present < 6)
+
+
+county_pres %>%
+  summarise(unique_count = n_distinct(county_fips))
+
+
+
+```
+
+
+## Explorations - Census Data
+Note on Census data: I have hard copy csvs for 2012, 2016, and 2020, but for some reason the earlier data is only accessible through API. Strange, but that's why we have the api here. 
+
+```{r}
+
+
+
+# set directory
+here::i_am("code/exploration_censusdata.R")
+
+# US Census Board API Key
+# 6b04ff55736c418eed28d02b041d8a382d5b0319
+USCB_APIkey <- "6b04ff55736c418eed28d02b041d8a382d5b0319"
+
+
+
+# API FETCH -------------------------------------------------------------------
+# Basic GET request to the API
+#["DP02_0060PE",
+#"Percent!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!9th to 12th grade, no diploma",
+#"SELECTED SOCIAL CHARACTERISTICS IN THE UNITED STATES"]
+
+# 2008 does not have 5 year data, as the survey began in 2005
+# 2009 DOES have 5 year data
+#url <- "https://api.census.gov/data/2008/acs/acs1/profile?get=DP02_0060PE&for=county:*&key=6b04ff55736c418eed28d02b041d8a382d5b0319"  
+url <- "https://api.census.gov/data/2009/acs/acs5/profile?get=DP02_0060PE&for=county:*&key=6b04ff55736c418eed28d02b041d8a382d5b0319"  
+
+
+# need to convert this into a function so i can iterate over all the columns i want for 2008
+response <- GET(url) # request
+data <- content(response, as = "text", encoding = "UTF-8") # data encoding for json
+json_data <- fromJSON(data) #json extract
+json_as_df <- as.data.frame(json_data[-1, ])  # skip first row for header
+colnames(json_as_df) <- json_data[1, ]  # assign column name
+
+
+
+
+
+
+# EPLORATIONS -------------------------------------------------------------
+# Decennial ----------------------------------------------------------------
+# load data
+Decennial_2000 <- read_csv(here("data/DECENNIALDPSF42000.DP1_2024-10-19T161201/DECENNIALDPSF42000.DP1-Data.csv"))
+
+Decennial_2000_edited <- Decennial_2000 %>%
+  select(-contains("Percent"),
+         -contains("Margin"))
+
+head(names(Decennial_2000_edited), 5)
+# Total population!!SEX AND AGE
+# RELATIONSHIP
+# HOUSEHOLDS BY TYPE
+# HOUSING TENURE
+
+
+
+# DP2 - Social ----------------------------------------------------------------
+# load data
+DP2_2012_5Y <- read_csv(here("data/productDownload_2024-10-19T191219/ACSDP5Y2012.DP02-Data.csv"))
+
+DP2_2012_5Y_edited <- DP2_2012_5Y %>%
+  select(-contains("Percent"),
+         -contains("Margin"),
+         -contains("GRANDPARENTS"))
+
+head(names(DP2_2012_5Y_edited), 5)
+# HOUSEHOLDS BY TYPE
+# RELATIONSHIP
+# MARITAL STATUS
+# FERTILITY
+# SCHOOL ENROLLMENT
+# EDUCATIONAL ATTAINMENT
+# VETERAN STATUS
+# DISABILITY STATUS OF THE CIVILIAN NONINSTITUTIONALIZED POPULATION
+# RESIDENCE 1 YEAR AGO
+# PLACE OF BIRTH
+# U.S. CITIZENSHIP STATUS
+# YEAR OF ENTRY
+# WORLD REGION OF BIRTH OF FOREIGN BORN
+# LANGUAGE SPOKEN AT HOME
+# ANCESTRY
+
+# Function to count "null" values in each column
+count_nulls <- function(col) {
+  sum(tolower(trimws(col)) == "null", na.rm = TRUE)
+}
+
+# Apply the function to each column in the dataframe
+null_counts <- sapply(DP2_2012_5Y_edited, count_nulls)
+# you can check this out to see it's 78 across all
+
+
+
+
+
+
+# DP3 - Economic ----------------------------------------------------------------
+# load data
+DP3_2012_5Y <- read_csv(here("data/productDownload_2024-10-19T191310/ACSDP5Y2012.DP03-Data.csv"))
+
+DP3_2012_5Y_edited <- DP2_2012_5Y %>%
+  select(-contains("Percent"),
+         -contains("Margin"))
+
+head(names(DP3_2012_5Y_edited), 5)
+# EMPLOYMENT STATUS
+# COMMUTING TO WORK
+# OCCUPATION
+# INDUSTRY
+# CLASS OF WORKER
+# INCOME AND BENEFITS (IN 2012 INFLATION-ADJUSTED DOLLARS)
+# HEALTH INSURANCE COVERAGE
+
+
+
+
+# DP4 - Selected Housing ----------------------------------------------------------------
+# load data
+DP4_2012_5Y <- read_csv(here("data/productDownload_2024-10-19T191541/ACSDP5Y2012.DP04-Data.csv"))
+
+DP4_2012_5Y_edited <- DP4_2012_5Y %>%
+  select(-contains("Percent"),
+         -contains("Margin"))
+
+head(names(DP4_2012_5Y_edited), 5)
+# HOUSING OCCUPANCY
+# UNITS IN STRUCTURE
+# YEAR STRUCTURE BUILT
+# ROOMS
+# BEDROOMS
+# HOUSING TENURE
+# YEAR HOUSEHOLDER MOVED INTO UNIT
+# VEHICLES AVAILABLE
+# HOUSE HEATING FUEL
+# SELECTED CHARACTERISTICS
+# OCCUPANTS PER ROOM
+# VALUE
+# MORTGAGE STATUS
+# SELECTED MONTHLY OWNER COSTS (SMOC)
+# GROSS RENT
+
+
+
+
+
+# DP4 - Selected Housing ----------------------------------------------------------------
+# load data
+DP5_2012_5Y <- read_csv(here("data/productDownload_2024-10-19T191549/ACSDP5Y2012.DP05-Data.csv"))
+
+DP5_2012_5Y_edited <- DP5_2012_5Y %>%
+  select(-contains("Percent"),
+         -contains("Margin"))
+
+head(names(DP5_2012_5Y_edited),5)
+# SEX AND AGE
+# RACE
+# HISPANIC OR LATINO AND RACE
+# Total housing units
+
+```
+
+
+
