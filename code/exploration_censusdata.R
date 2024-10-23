@@ -10,33 +10,6 @@ library(jsonlite)
 # set directory
 here::i_am("code/exploration_censusdata.R")
 
-# US Census Board API Key
-# 6b04ff55736c418eed28d02b041d8a382d5b0319
-USCB_APIkey <- "6b04ff55736c418eed28d02b041d8a382d5b0319"
-
-
-
-# API FETCH -------------------------------------------------------------------
-# Basic GET request to the API
-#["DP02_0060PE",
-#"Percent!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!9th to 12th grade, no diploma",
-#"SELECTED SOCIAL CHARACTERISTICS IN THE UNITED STATES"]
-
-# 2008 does not have 5 year data, as the survey began in 2005
-# 2009 does have 5 year data
-#url <- "https://api.census.gov/data/2008/acs/acs1/profile?get=DP02_0060PE&for=county:*&key=6b04ff55736c418eed28d02b041d8a382d5b0319"  
-url <- "https://api.census.gov/data/2009/acs/acs5/profile?get=DP02_0060PE&for=county:*&key=6b04ff55736c418eed28d02b041d8a382d5b0319"  
-
-
-response <- GET(url)
-data <- content(response, as = "text", encoding = "UTF-8")
-
-json_data <- fromJSON(data)
-
-df <- as.data.frame(json_data[-1, ])  # Skip the first row (header)
-colnames(df) <- json_data[1, ]  # Assign the first row as column names
-
-
 
 
 
