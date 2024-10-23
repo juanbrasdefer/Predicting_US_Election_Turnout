@@ -59,6 +59,20 @@ names(Decennial_2000_edited)
 
 
 
+
+
+# 2009 API DP02 - Social ----------------------------------------------------------------
+# load data
+DP2_2009_5Y <- read_csv(here("data/api_censusdata/2009_group(DP02).csv"))
+
+DP2_2009_5Y_edited <- DP2_2009_5Y %>%
+  select(-contains("Percent"),
+         -contains("Margin"),
+         -contains("GRANDPARENTS"))
+
+names(DP2_2009_5Y_edited)
+
+
 # DP2 - Social ----------------------------------------------------------------
 # load data
 DP2_2012_5Y <- read_csv(here("data/productDownload_2024-10-19T191219/ACSDP5Y2012.DP02-Data.csv"))
