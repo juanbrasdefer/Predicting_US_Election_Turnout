@@ -101,6 +101,13 @@ write_labeldf_tocsv <- function (var_labels_df){
 
 
 
+# Load back in and 
+# step 1
+# split labels dataset into two datasets
+# row begins with DP (indicators)
+# row does not begin with DP (identifier variables)
+
+
 
 
 
