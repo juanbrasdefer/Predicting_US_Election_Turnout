@@ -142,3 +142,18 @@ full_censusdata <- full_censusdata %>%
 
 full_censusdata %>%
   write_csv(here("data/clean/ACS_2009-2020_SelectedIndicators.csv"))
+
+
+# step 5.alt - prepare alternate data, dropping columns of total pop----------------------------
+
+
+full_censusdata$census_year<-as.character(full_censusdata$census_year) 
+full_censusdata$county_fips<-as.character(full_censusdata$county_fips) 
+
+full_censusdata_slim <- full_censusdata %>%
+  #select(-where(~ all(. >= 101, na.rm = TRUE)))
+  select(where(~ !any(. > 101, na.rm = TRUE)))
+
+full_censusdata_slim %>%
+  write_csv(here("data/clean/ACS_2009-2020_SelectedIndicators_Slim.csv"))
+
