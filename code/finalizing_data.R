@@ -15,15 +15,21 @@ here::i_am("code/finalizing_data.R")
 clean_voting <- read_csv(here("data/clean/CountyPresReturns_2000-2020_Flattened.csv")) %>%
   select(-state,
          -state_county)
-clean_census <- read_csv(here("data/clean/ACS_2009-2020_SelectedIndicators.csv")) %>%
+clean_census <- read_csv(here("data/clean/ACS_2009-2020_SelectedIndicators_Slim.csv")) %>%
   select(-county_fips,
-         -census_year)
+         -census_year,
+         -GEO_ID)
 
 
-# Step 2 - join data --------------------------------------------------------------------
+# Step 2 - join data and create target variable, 'Turnout Percentage' ------------------------------------------------------
 
 pipeline_ready <- clean_voting %>%
-  inner_join(clean_census, by = "unique_id")
+  inner_join(clean_census, by = "unique_id") %>%
+  mutate(voter_turnout = totalvotes/ DP05_0001PE)  #create target column: turnout percentage
+                      #based off of col "DP05_0001PE" and "totalvotes"
+                      # note: this results in some 
+
+
 
 
 

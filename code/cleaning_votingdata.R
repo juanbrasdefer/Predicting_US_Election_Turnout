@@ -23,7 +23,11 @@ voting_as_wide <- countypres_raw %>%
   mutate(state_county = paste0(state_po,
                                "-",
                                county_name)) %>% # retain only our identifier columns
-  filter(!(is.na(county_fips)))
+  filter(!(is.na(county_fips))) %>%
+  filter(county_fips != "2938000") %>% # remove Kansas City because jackson county already in dataset
+                                        # and this long fips is nonexistent in census dataset
+                                        # so it'll get dropped anyway
+  filter(county_fips != 02099) # drop District 99 Arkansas which is empty in the data 
 # Connecticut - WRITE-IN
 # Maine - Uniformed Service & Overseas
 # Rhode Island - Federal Precinct 
@@ -43,9 +47,6 @@ flattened_voting_wide <- voting_as_wide %>%
             aggvotes_G = sum(GREEN, na.rm = TRUE),
             aggvotes_L = sum(LIBERTARIAN, na.rm = TRUE),
             aggvotes_O = sum(OTHER, na.rm = TRUE)) %>%
-  filter(county_fips != "2938000") %>% # remove Kansas City because jackson county already in dataset
-                                        # and this long fips is nonexistent in census dataset
-                                        # so it'll get dropped anyway
   mutate(county_fips = str_pad(county_fips, width = 5, side = "left", pad = "0"))
 
 
@@ -57,9 +58,10 @@ flattened_voting_wide <- flattened_voting_wide %>%
   mutate(
     proportion_D = aggvotes_D / totalvotes,  # Democratic proportion
     proportion_R = aggvotes_R / totalvotes,  # Republican proportion
-    proportion_explained_by_DR = proportion_D + proportion_R,
-    net_DR_margin = proportion_D - proportion_R) # Net margin: positive = Dem, negative = Rep
-  
+    proportion_G = aggvotes_G / totalvotes,  # Green proportion
+    proportion_L = aggvotes_L / totalvotes,  # Libertarian proportion
+    proportion_O = aggvotes_O / totalvotes   # 'Other' proportion
+    ) 
 
 
 flattened_voting_wide %>%

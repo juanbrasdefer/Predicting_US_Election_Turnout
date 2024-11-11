@@ -129,9 +129,6 @@ full_censusdata <- do.call(rbind, list(LCD_census_2009,
                                      LCD_census_2012, 
                                      LCD_census_2016, 
                                      LCD_census_2020))
-# MAYBE: NEED TO DROP ALSO ANY FIPS THAT ARE NOT IN EVERY YEAR?
-# fuuuuuuuuuuuuuck
-# skip this for now
 
 
 # step 5 - prep for join with voting data ------------------------------------------------
@@ -152,7 +149,11 @@ full_censusdata$county_fips<-as.character(full_censusdata$county_fips)
 
 full_censusdata_slim <- full_censusdata %>%
   #select(-where(~ all(. >= 101, na.rm = TRUE)))
-  select(where(~ !any(. > 101, na.rm = TRUE)))
+  group_by(unique_id,
+           census_year,
+           county_fips,
+           DP05_0001PE) %>%
+  select(where(~ !any(. > 101, na.rm = TRUE))) # drop all except one column of total pop
 
 full_censusdata_slim %>%
   write_csv(here("data/clean/ACS_2009-2020_SelectedIndicators_Slim.csv"))
